@@ -2,9 +2,24 @@ import BinaryStream from '@jsprismarine/jsbinaryutils';
 import ConnectionRequest1 from '../protocol/Packets/ConnectionRequest1';
 import ConnectionRequest2 from '../protocol/Packets/ConnectionRequest2';
 import ConnectionResponse1 from '../protocol/Packets/ConnectionResponse1';
+import ConnectionResponse2 from '../protocol/Packets/ConnectionResponse2';
 import { EventEmitter } from 'events';
 import Packet from '../protocol/Packets/Packet';
 import dgram from 'dgram';
+import { getPacketByID } from '../protocol/Packets/Registry';
+
+const prettifyHex = (str: string): string => {
+    return `\n${str
+        .replace(/([0-9a-fA-F]{2})/g, '$1 ')
+        .split(' ')
+        .map((v, i) => (i % 2 === 0 ? ' ' + v : v))
+        .join(' ')
+        .trim()
+        .split('  ')
+        .map((v, i) => (i % 4 === 0 ? '\n' + v : v))
+        .join('  ')
+        .trim()}\n`;
+};
 
 export default class Client extends EventEmitter {
     private udpSocket!: dgram.Socket;
@@ -26,27 +41,44 @@ export default class Client extends EventEmitter {
             const data = new BinaryStream(message);
             const packetId = data.readByte();
 
-            switch (packetId) {
-                case ConnectionResponse1.NetID: {
-                    const res = new ConnectionResponse1();
-                    res.append(data.getBuffer());
-                    res.setOffset(1);
-                    res.decode();
+            try {
+                const packet = new (getPacketByID(packetId))();
+                packet.append(data.getBuffer());
+                packet.setOffset(1);
+                packet.decode();
 
-                    const req = new ConnectionRequest2();
-                    req.username = 'openfactorio';
-                    req.uuid = res.uuid;
-                    req.uuid2 = res.uuid2;
-                    await this.send(req);
-                    break;
+                console.info(`Received packet`, packet);
+
+                switch (packetId) {
+                    case ConnectionResponse1.NetID: {
+                        const req = new ConnectionRequest2();
+                        req.username = 'openfactorio';
+                        req.uuid = (packet as ConnectionResponse1).uuid;
+                        req.uuid2 = (packet as ConnectionResponse1).uuid2;
+                        await this.send(req);
+                        break;
+                    }
+                    case ConnectionResponse2.NetID: {
+                        const req = new ConnectionRequest2();
+                        await this.send(req);
+                        break;
+                    }
+                    default: {
+                        console.error(
+                            `Unknown packet with id "0x${packetId.toString(
+                                16
+                            )}": ${prettifyHex(
+                                data.getBuffer().toString('hex')
+                            )}`
+                        );
+                    }
                 }
-                default: {
-                    console.warn(
-                        `Unknown packet with id "0x${packetId.toString(
-                            16
-                        )}": ${data.getBuffer().toString('hex')}`
-                    );
-                }
+            } catch (error) {
+                console.error(error as any);
+                const packet = new Packet();
+                packet.append(data.getBuffer());
+                packet.setOffset(1);
+                console.log(packet);
             }
         });
 
@@ -97,11 +129,7 @@ export default class Client extends EventEmitter {
                     if (error) return reject(error);
 
                     // TODO: remove
-                    console.info(
-                        `Sent packet with ID ${packet.getName()}, size: ${bytes}, ${data
-                            .getBuffer()
-                            .toString('hex')}`
-                    );
+                    console.info(`Sent packet`, packet);
                     resolve(null);
                 }
             );

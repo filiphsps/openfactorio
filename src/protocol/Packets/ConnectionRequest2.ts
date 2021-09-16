@@ -12,6 +12,11 @@ export default class ConnectionRequest2 extends Packet {
         this.writeLInt(this.uuid);
         this.writeLInt(this.uuid2);
 
+        this.writeByte(0x4c);
+        this.writeByte(0xc3);
+        this.writeByte(0x7e);
+        this.writeByte(0xa2);
+
         this.writeString(this.username);
 
         this.writeByte(0x00);

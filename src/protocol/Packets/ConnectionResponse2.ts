@@ -1,6 +1,6 @@
 import Packet from './Packet';
 
-export default class ConnectionResponse1 extends Packet {
+export default class ConnectionResponse2 extends Packet {
     public static NetID: number = 0xe5;
 
     public version!: string;
@@ -14,10 +14,6 @@ export default class ConnectionResponse1 extends Packet {
 
     public decode() {
         const unknown = this.readLong();
-        this.version = this.readVersion();
-
-        this.build = this.readLShort();
-
         this.uuid = this.readLInt();
         this.uuid2 = this.readLInt();
     }
