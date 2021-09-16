@@ -1,5 +1,6 @@
 import BinaryStream from '@jsprismarine/jsbinaryutils';
 import ConnectionRequest1 from '../protocol/Packets/ConnectionRequest1';
+import ConnectionRequest2 from '../protocol/Packets/ConnectionRequest2';
 import ConnectionResponse1 from '../protocol/Packets/ConnectionResponse1';
 import { EventEmitter } from 'events';
 import Packet from '../protocol/Packets/Packet';
@@ -21,20 +22,32 @@ export default class Client extends EventEmitter {
         this.host = config.host;
         this.port = config.port;
 
-        const data = new BinaryStream();
-        data.append(Buffer.from('3fc265', 'hex'));
-        console.log('192.168.86.128', data.getBuffer().readInt8());
+        this.udpSocket.on('message', async (message, remote) => {
+            const data = new BinaryStream(message);
+            const packetId = data.readByte();
 
-        // return;
+            switch (packetId) {
+                case ConnectionResponse1.NetID: {
+                    const res = new ConnectionResponse1();
+                    res.append(data.getBuffer());
+                    res.setOffset(1);
+                    res.decode();
 
-        this.udpSocket.on('message', (message, remote) => {
-            // TODO: streamline this
-            const packet = new ConnectionResponse1();
-            packet.append(message);
-            packet.setOffset(0);
-            packet.decode();
-
-            console.log(packet);
+                    const req = new ConnectionRequest2();
+                    req.username = 'openfactorio';
+                    req.uuid = res.uuid;
+                    req.uuid2 = res.uuid2;
+                    await this.send(req);
+                    break;
+                }
+                default: {
+                    console.warn(
+                        `Unknown packet with id "0x${packetId.toString(
+                            16
+                        )}": ${data.getBuffer().toString('hex')}`
+                    );
+                }
+            }
         });
 
         this.udpSocket.on('listening', async () => {
@@ -52,7 +65,7 @@ export default class Client extends EventEmitter {
         });
 
         this.udpSocket.on('error', (error) => {
-            console.log('error: ', error);
+            console.error('error: ', error);
         });
 
         await new Promise((resolve, reject) => {
@@ -69,6 +82,7 @@ export default class Client extends EventEmitter {
     private async send(packet: Packet) {
         packet.encode();
         const data = new BinaryStream();
+        data.writeByte(packet.getID());
         data.append(packet.getBuffer());
 
         // TODO: this should probably be a generic function
@@ -84,7 +98,9 @@ export default class Client extends EventEmitter {
 
                     // TODO: remove
                     console.info(
-                        `Sent packet with ID ${packet.getName()}, size: ${bytes}`
+                        `Sent packet with ID ${packet.getName()}, size: ${bytes}, ${data
+                            .getBuffer()
+                            .toString('hex')}`
                     );
                     resolve(null);
                 }

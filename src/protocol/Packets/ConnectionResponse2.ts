@@ -1,7 +1,7 @@
 import Packet from './Packet';
 
 export default class ConnectionResponse1 extends Packet {
-    public static NetID: number = 0xe3;
+    public static NetID: number = 0xe5;
 
     public version!: string;
     public build!: number;
