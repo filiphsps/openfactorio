@@ -72,4 +72,5 @@ typings/
 # Dev
 # ===============================
 /dev.sh
-/internal
+# used to store privacy-sensitive wireshark captures.
+internal/*

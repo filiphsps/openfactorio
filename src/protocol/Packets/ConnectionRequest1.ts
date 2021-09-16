@@ -1,7 +1,7 @@
 import Packet from './Packet';
 
 export default class ConnectionRequest1 extends Packet {
-    public static NetID: number = 0x01;
+    public static NetID: number = 0x22;
 
     public uuid!: number;
     public build!: number;
@@ -14,13 +14,14 @@ export default class ConnectionRequest1 extends Packet {
 
     public encode() {
         this.reset();
-        this.writeByte(0x22);
+
+        this.writeByte(ConnectionRequest1.NetID);
+
+        this.writeByte(0x00);
         this.writeByte(0x00);
 
-        this.writeLShort(ConnectionRequest1.NetID);
+        [1, 1, 39].forEach((v) => this.writeByte(v)); // Game version
 
-        this.writeByte(0x01);
-        this.writeByte(0x27);
         this.writeLShort(this.build);
         this.writeLInt(this.uuid);
     }

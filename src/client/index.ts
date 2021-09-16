@@ -28,20 +28,13 @@ export default class Client extends EventEmitter {
         // return;
 
         this.udpSocket.on('message', (message, remote) => {
+            // TODO: streamline this
             const packet = new ConnectionResponse1();
             packet.append(message);
             packet.setOffset(0);
             packet.decode();
 
             console.log(packet);
-
-            console.log(
-                remote.address +
-                    ':' +
-                    remote.port +
-                    ' - ' +
-                    message.toString('hex')
-            );
         });
 
         this.udpSocket.on('listening', async () => {

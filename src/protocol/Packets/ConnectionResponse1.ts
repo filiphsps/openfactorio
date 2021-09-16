@@ -1,7 +1,7 @@
 import Packet from './Packet';
 
 export default class ConnectionResponse1 extends Packet {
-    public static NetID: number = 0x128;
+    public static NetID: number = 0xe3;
 
     public uuid!: number;
     public build!: number;
@@ -11,13 +11,26 @@ export default class ConnectionResponse1 extends Packet {
     }
 
     public decode() {
-        const unknown = this.readLShort();
-        const id = this.readLShort();
-        const unknown2 = this.readLInt();
-        const unknown3 = this.readLInt();
+        const id = this.readByte();
+        const unknown = this.readLong();
+        const version = [
+            this.readByte(),
+            this.readByte(),
+            this.readByte()
+        ].join('.');
 
         this.build = this.readLShort();
         this.uuid = this.readLInt();
-        console.log(unknown, id, unknown2, unknown3, this.build, this.uuid);
+
+        const unknown2 = this.readLInt();
+
+        console.log(
+            id.toString(16),
+            unknown,
+            version,
+            this.build,
+            this.uuid,
+            unknown2
+        );
     }
 }
