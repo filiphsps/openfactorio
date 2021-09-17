@@ -59,4 +59,13 @@ export default class Packet extends PacketBinaryStream {
 
         return res;
     }
+
+    public readArray(callback: any): any[] {
+        const res = [];
+        const length = this.readVarInt();
+
+        for (let i = 0; i < length; i++) res.push(callback(this));
+
+        return res;
+    }
 }

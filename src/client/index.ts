@@ -41,12 +41,77 @@ export default class Client extends EventEmitter {
             const data = new BinaryStream(message);
 
             try {
-                const packet = new (PacketRegistry.getPacketByID(
-                    data.readByte()
-                ))(message, 1);
+                const type = data.readByte() & 0b11011111;
+                const isFragmented = (type & 0b01000000) > 0;
+                const isLastFragment = (type & 0b10000000) > 0;
+
+                if (isFragmented || isLastFragment) {
+                    const readArray = (
+                        stream: BinaryStream,
+                        callback: any
+                    ): any[] => {
+                        const res = [];
+                        const length = stream.readVarInt();
+
+                        for (let i = 0; i < length; i++)
+                            res.push(callback(this));
+
+                        return res;
+                    };
+
+                    // TODO: do this properly
+                    let messageId: number = '0x' as any;
+                    for (let i = 0; i < 8; i++) {
+                        let byte = `${data.readByte().toString(16)}`;
+                        if (byte.length < 2) byte = `0${byte}`;
+
+                        (messageId as any) += byte;
+                    }
+
+                    messageId = Number.parseInt(
+                        (messageId as unknown) as any,
+                        16
+                    );
+
+                    let fragmentId;
+                    let confirm: number[] = [];
+
+                    if (isFragmented) {
+                        if ((fragmentId = data.readByte()) == 0xff) {
+                            // TODO: Like really, do this shit properly...
+                            fragmentId = '0x' as any;
+                            for (let i = 0; i < 8; i++) {
+                                let byte = `${data.readByte().toString(16)}`;
+                                if (byte.length < 2) byte = `0${byte}`;
+
+                                (fragmentId as any) += byte;
+                            }
+
+                            fragmentId = Number.parseInt(
+                                (fragmentId as unknown) as any,
+                                16
+                            );
+                        }
+                    }
+
+                    if ((messageId & 0x8000) > 0) {
+                        confirm = readArray(data, (x: any) => x.readLLong());
+                    }
+
+                    messageId = messageId & 0x7fff;
+                    // console.log(messageId, fragmentId, confirm);
+                }
+
+                const packet = new (PacketRegistry.getPacketByID(type))(
+                    message,
+                    data.getOffset() - 1
+                );
                 packet.decode();
 
-                console.info(`Received packet`, packet);
+                console.info(
+                    `Received packet 0x${packet.getID().toString(16)}`,
+                    packet
+                );
 
                 switch (packet.getID()) {
                     case ConnectionResponse1.NetID: {
@@ -58,8 +123,7 @@ export default class Client extends EventEmitter {
                         break;
                     }
                     case ConnectionResponse2.NetID: {
-                        const req = new ConnectionRequest2();
-                        await this.send(req);
+                        console.log('TODO');
                         break;
                     }
                     default: {
@@ -107,6 +171,7 @@ export default class Client extends EventEmitter {
             });
         });
         const packet = new ConnectionRequest1();
+        packet.uuid = Math.floor(Math.random() * 0xbeef);
         await this.send(packet);
     }
 

@@ -47,7 +47,7 @@
     },
     "husky": {
         "hooks": {
-            "pre-commit": "npm run build && npm run prettier && npm run test",
+            "pre-commit": "npm run build && npm run test",
             "post-checkout": "yarnhook",
             "post-merge": "yarnhook",
             "post-rewrite": "yarnhook"
