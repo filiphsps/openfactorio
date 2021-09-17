@@ -5,8 +5,8 @@ import ConnectionResponse1 from '../protocol/Packets/ConnectionResponse1';
 import ConnectionResponse2 from '../protocol/Packets/ConnectionResponse2';
 import { EventEmitter } from 'events';
 import Packet from '../protocol/Packets/Packet';
+import PacketRegistry from '../protocol/PacketRegistry';
 import dgram from 'dgram';
-import { getPacketByID } from '../protocol/Packets/Registry';
 
 const prettifyHex = (str: string): string => {
     return `\n${str
@@ -39,17 +39,16 @@ export default class Client extends EventEmitter {
 
         this.udpSocket.on('message', async (message, remote) => {
             const data = new BinaryStream(message);
-            const packetId = data.readByte();
 
             try {
-                const packet = new (getPacketByID(packetId))();
-                packet.append(data.getBuffer());
-                packet.setOffset(1);
+                const packet = new (PacketRegistry.getPacketByID(
+                    data.readByte()
+                ))(message, 1);
                 packet.decode();
 
                 console.info(`Received packet`, packet);
 
-                switch (packetId) {
+                switch (packet.getID()) {
                     case ConnectionResponse1.NetID: {
                         const req = new ConnectionRequest2();
                         req.username = 'openfactorio';
@@ -65,9 +64,9 @@ export default class Client extends EventEmitter {
                     }
                     default: {
                         console.error(
-                            `Unknown packet with id "0x${packetId.toString(
-                                16
-                            )}": ${prettifyHex(
+                            `Unknown packet with id "0x${packet
+                                .getID()
+                                .toString(16)}": ${prettifyHex(
                                 data.getBuffer().toString('hex')
                             )}`
                         );

@@ -3,16 +3,9 @@ import Packet from './Packet';
 export default class ConnectionRequest1 extends Packet {
     public static NetID: number = 0x02;
 
-    public version!: string;
+    public version: string = '1.1.39';
     public uuid!: number;
-    public build!: number;
-
-    constructor() {
-        super();
-        this.version = '1.1.39';
-        this.build = 58937; // TODO: don't use "magic numbers"
-        this.uuid = 0xbeef; // TODO: random
-    }
+    public build: number = 58937; // TODO: don't use "magic numbers"
 
     public decode() {
         this.readByte();
@@ -30,6 +23,6 @@ export default class ConnectionRequest1 extends Packet {
         this.writeVersion(this.version);
 
         this.writeLShort(this.build);
-        this.writeLInt(this.uuid);
+        this.writeLInt(this.uuid ?? 0xbeef);
     }
 }

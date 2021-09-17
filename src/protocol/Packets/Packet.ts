@@ -43,6 +43,8 @@ export default class Packet extends PacketBinaryStream {
     }
 
     public writeString(val: string) {
+        if (!val) throw new Error('String is empty');
+
         this.writeByte(val.length);
         val.split('').forEach((char) => this.writeByte(char.charCodeAt(0)));
     }

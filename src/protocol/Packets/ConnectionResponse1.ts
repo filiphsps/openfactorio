@@ -8,10 +8,6 @@ export default class ConnectionResponse1 extends Packet {
     public uuid!: number;
     public uuid2!: number;
 
-    constructor() {
-        super();
-    }
-
     public decode() {
         const unknown = this.readLong();
         this.version = this.readVersion();
