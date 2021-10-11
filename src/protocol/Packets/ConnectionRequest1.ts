@@ -3,9 +3,9 @@ import Packet from './Packet';
 export default class ConnectionRequest1 extends Packet {
     public static NetID: number = 0x02;
 
-    public version: string = '1.1.39';
+    public version: string = '1.1.41';
     public uuid!: number;
-    public build: number = 58937; // TODO: don't use "magic numbers"
+    public build: number = 58972; // TODO: don't use "magic numbers"
 
     public decode() {
         this.readByte();
