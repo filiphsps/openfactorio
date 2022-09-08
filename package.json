@@ -19,7 +19,7 @@
         "express": "4.17.1",
         "moment": "2.29.1",
         "node-fetch": "3.0.0",
-        "pino": "^6.10.0",
+        "pino": "^8.0.0",
         "pino-logdna-formatter": "1.2.0",
         "xml2js": "0.4.23"
     },
