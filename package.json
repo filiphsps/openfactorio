@@ -41,7 +41,7 @@
         "prettier": "2.4.1",
         "ts-node": "10.2.1",
         "typescript": "4.4.3",
-        "yarnhook": "0.5.1"
+        "yarnhook": "0.5.3"
     },
     "husky": {
         "hooks": {
