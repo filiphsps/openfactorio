@@ -16,7 +16,7 @@
     "dependencies": {
         "@jsprismarine/jsbinaryutils": "^2.1.8",
         "body-parser": "1.19.0",
-        "express": "4.17.1",
+        "express": "4.18.2",
         "moment": "2.29.1",
         "node-fetch": "3.0.0",
         "pino": "^6.10.0",
